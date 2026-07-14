@@ -144,12 +144,16 @@ export const CONFIG = {
 // (지리를 정확히 보여주려고 지도에는 포함했어요)
 export const MAP_VIEWBOX = '0 0 360 480'
 
+// lat/lng: 카카오맵에서 특산물 핀을 찍을 지역 대표 좌표
 export const MAP_REGIONS = [
   {
     key: '수도권',
     label: '수도권',
+    emoji: '🏙️',
     color: '#B0BEC5',
     hasProducts: false,
+    lat: 37.45,
+    lng: 127.0,
     path: 'M118,72 L172,60 L196,92 L184,132 L128,140 L104,108 Z',
     labelX: 148,
     labelY: 104,
@@ -158,8 +162,11 @@ export const MAP_REGIONS = [
   {
     key: '강원',
     label: '강원',
+    emoji: '⛰️',
     color: '#42A5F5',
     hasProducts: true,
+    lat: 37.8,
+    lng: 128.3,
     path: 'M200,58 L286,52 L308,104 L288,158 L216,150 L190,120 Z',
     labelX: 248,
     labelY: 104,
@@ -168,8 +175,11 @@ export const MAP_REGIONS = [
   {
     key: '충청',
     label: '충청',
+    emoji: '🌾',
     color: '#66BB6A',
     hasProducts: true,
+    lat: 36.6,
+    lng: 127.3,
     path: 'M104,148 L188,146 L206,180 L196,228 L126,236 L94,196 Z',
     labelX: 146,
     labelY: 192,
@@ -178,8 +188,11 @@ export const MAP_REGIONS = [
   {
     key: '경상',
     label: '경상',
+    emoji: '🍎',
     color: '#FF7043',
     hasProducts: true,
+    lat: 35.9,
+    lng: 128.5,
     path: 'M212,162 L296,172 L302,250 L266,330 L214,322 L202,250 Z',
     labelX: 252,
     labelY: 240,
@@ -188,8 +201,11 @@ export const MAP_REGIONS = [
   {
     key: '전라',
     label: '전라',
+    emoji: '🌊',
     color: '#FFCA28',
     hasProducts: true,
+    lat: 35.4,
+    lng: 127.0,
     path: 'M98,242 L194,240 L204,286 L182,344 L120,346 L90,298 Z',
     labelX: 144,
     labelY: 292,
@@ -198,14 +214,20 @@ export const MAP_REGIONS = [
   {
     key: '제주',
     label: '제주',
+    emoji: '🌴',
     color: '#AB47BC',
     hasProducts: true,
+    lat: 33.38,
+    lng: 126.55,
     path: 'M122,414 L176,408 L188,438 L152,456 L118,446 Z',
     labelX: 152,
     labelY: 434,
     desc: '따뜻한 남쪽 섬이에요. 감귤과 흑돼지가 유명해요.',
   },
 ]
+
+// 카카오맵 초기 중심/줌 (전국이 보이도록)
+export const MAP_CENTER = { lat: 36.3, lng: 127.8, level: 13 }
 
 // 지역 이름 → 지도 지역 정보 (빠른 조회용)
 export const MAP_REGION_BY_KEY = MAP_REGIONS.reduce((acc, r) => {

@@ -4,3 +4,8 @@ dist-ssr
 *.local
 .DS_Store
 .vercel
+
+# 환경변수(카카오 키 등) — .env.example 만 공유
+.env
+.env.*
+!.env.example

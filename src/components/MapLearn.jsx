@@ -1,9 +1,11 @@
 // MapLearn.jsx — "지도로 배우기" 화면
 //  - 도감(explore): 지역을 눌러 그 지역 특산물을 카드로 배웁니다.
 //  - 퀴즈(quiz): 특산물이 어느 지역인지 지도에서 찾아 누릅니다.
+//  - 지도는 카카오맵을 우선 사용하고, 안 되면 SVG 그림지도로 자동 대체합니다.
 // 이 화면은 무역 게임과 분리돼 있어(useState만 사용) 서로 영향이 없어요.
 import { useState } from 'react'
 import KoreaMap from './KoreaMap.jsx'
+import KakaoMap from './KakaoMap.jsx'
 import {
   MAP_REGION_BY_KEY,
   PRODUCTS,
@@ -25,6 +27,10 @@ const ALL_PRODUCT_IDS = Object.keys(PRODUCTS)
 
 export default function MapLearn() {
   const [mode, setMode] = useState('explore') // explore | quiz
+  // 카카오맵이 실패하면 true → 이후에는 SVG 지도 사용(모드 바꿔도 유지)
+  const [mapFailed, setMapFailed] = useState(false)
+
+  const mapProps = { mapFailed, onMapFail: () => setMapFailed(true) }
 
   return (
     <div>
@@ -44,13 +50,23 @@ export default function MapLearn() {
         </button>
       </div>
 
-      {mode === 'explore' ? <ExploreMode /> : <QuizMode />}
+      {mode === 'explore' ? (
+        <ExploreMode {...mapProps} />
+      ) : (
+        <QuizMode {...mapProps} />
+      )}
     </div>
   )
 }
 
+// 카카오맵 우선, 실패하면 SVG 지도. 두 지도는 같은 props 를 받습니다.
+function RegionMap({ mapFailed, onMapFail, ...rest }) {
+  if (mapFailed) return <KoreaMap {...rest} />
+  return <KakaoMap {...rest} onFail={onMapFail} />
+}
+
 // ── 도감 모드 ──────────────────────────────────
-function ExploreMode() {
+function ExploreMode({ mapFailed, onMapFail }) {
   const [selected, setSelected] = useState('강원')
   const region = MAP_REGION_BY_KEY[selected]
   const productIds = PRODUCTS_BY_REGION[selected] || []
@@ -58,8 +74,13 @@ function ExploreMode() {
   return (
     <div className="map-layout">
       <div className="panel map-panel">
-        <p className="map-hint">지도에서 지역을 눌러 보세요! 👆</p>
-        <KoreaMap onRegionClick={setSelected} selected={selected} />
+        <p className="map-hint">지도에서 지역(핀)을 눌러 보세요! 👆</p>
+        <RegionMap
+          mapFailed={mapFailed}
+          onMapFail={onMapFail}
+          onRegionClick={setSelected}
+          selected={selected}
+        />
       </div>
 
       <div className="panel">
@@ -100,7 +121,7 @@ function ExploreMode() {
 }
 
 // ── 퀴즈 모드 ──────────────────────────────────
-function QuizMode() {
+function QuizMode({ mapFailed, onMapFail }) {
   const [questions, setQuestions] = useState(() => shuffle(ALL_PRODUCT_IDS))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -119,7 +140,6 @@ function QuizMode() {
     if (correct) {
       setScore((s) => s + 1)
       setLocked(true)
-      // 1초 뒤 다음 문제
       setTimeout(() => {
         setFeedback(null)
         setLocked(false)
@@ -161,20 +181,25 @@ function QuizMode() {
   return (
     <div className="map-layout">
       <div className="panel map-panel">
-        <KoreaMap
+        <RegionMap
+          mapFailed={mapFailed}
+          onMapFail={onMapFail}
           onRegionClick={handleClick}
           feedback={feedback}
           showLabels={showLabels}
           clickableOnlyProducts
         />
-        <label className="label-toggle">
-          <input
-            type="checkbox"
-            checked={showLabels}
-            onChange={(e) => setShowLabels(e.target.checked)}
-          />
-          지역 이름 보기
-        </label>
+        {/* '지역 이름 보기'는 SVG 지도일 때만 의미가 있어요(카카오 핀은 항상 이름 표시) */}
+        {mapFailed && (
+          <label className="label-toggle">
+            <input
+              type="checkbox"
+              checked={showLabels}
+              onChange={(e) => setShowLabels(e.target.checked)}
+            />
+            지역 이름 보기
+          </label>
+        )}
       </div>
 
       <div className="panel">
