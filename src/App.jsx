@@ -2,7 +2,7 @@
 //  - useReducer 로 게임 상태를 관리
 //  - 랜덤(주사위/시장배수/이벤트)은 여기 핸들러에서 뽑아 리듀서에 전달
 //  - 상태가 바뀔 때마다 localStorage 에 자동 저장
-import { useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useState } from 'react'
 import {
   reducer,
   createInitialState,
@@ -16,8 +16,12 @@ import Board from './components/Board.jsx'
 import PlayerInfo from './components/PlayerInfo.jsx'
 import ActionPanel from './components/ActionPanel.jsx'
 import ResultScreen from './components/ResultScreen.jsx'
+import MapLearn from './components/MapLearn.jsx'
 
 export default function App() {
+  // 화면 탭: 'game'(무역 게임) | 'map'(지도로 배우기)
+  const [tab, setTab] = useState('game')
+
   // 저장된 게임이 있으면 이어서, 없으면 새 게임으로 시작
   const [state, dispatch] = useReducer(reducer, undefined, () => loadState() || createInitialState())
 
@@ -46,6 +50,25 @@ export default function App() {
     <div className="app">
       <h1 className="app-title">🧑‍🌾 특산물 부루마블 무역 게임 🚢</h1>
 
+      {/* 상단 탭: 무역 게임 / 지도로 배우기 */}
+      <div className="main-tabs">
+        <button
+          className={`main-tab ${tab === 'game' ? 'active' : ''}`}
+          onClick={() => setTab('game')}
+        >
+          🎲 무역 게임
+        </button>
+        <button
+          className={`main-tab ${tab === 'map' ? 'active' : ''}`}
+          onClick={() => setTab('map')}
+        >
+          🗺️ 지도로 배우기
+        </button>
+      </div>
+
+      {tab === 'map' && <MapLearn />}
+
+      {tab === 'game' && (
       <div className="layout">
         <Board state={state} />
 
@@ -77,9 +100,10 @@ export default function App() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* 게임 종료 시 결과 화면 */}
-      {state.phase === 'ended' && state.result && (
+      {/* 게임 종료 시 결과 화면 (무역 게임 탭에서만) */}
+      {tab === 'game' && state.phase === 'ended' && state.result && (
         <ResultScreen result={state.result} onRestart={actions.restart} />
       )}
     </div>

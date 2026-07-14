@@ -137,3 +137,78 @@ export const CONFIG = {
   harvestMultiplier: 1.5, // 흉년 시 매입가 상승 배수
   surgeMultiplier: 2.0, // 수요 폭등 시 판매가 배수
 }
+
+// ── 8) 지도 학습용: 전국 지역 도형(SVG) + 설명 ──────
+// path 는 360×480 좌표계(viewBox)에서의 지역 모양입니다.
+// hasProducts=false 인 수도권은 이 게임에서 특산물을 다루지 않습니다.
+// (지리를 정확히 보여주려고 지도에는 포함했어요)
+export const MAP_VIEWBOX = '0 0 360 480'
+
+export const MAP_REGIONS = [
+  {
+    key: '수도권',
+    label: '수도권',
+    color: '#B0BEC5',
+    hasProducts: false,
+    path: 'M118,72 L172,60 L196,92 L184,132 L128,140 L104,108 Z',
+    labelX: 148,
+    labelY: 104,
+    desc: '서울·경기 지역이에요. 이 게임에서는 특산물을 다루지 않아요. 🙂',
+  },
+  {
+    key: '강원',
+    label: '강원',
+    color: '#42A5F5',
+    hasProducts: true,
+    path: 'M200,58 L286,52 L308,104 L288,158 L216,150 L190,120 Z',
+    labelX: 248,
+    labelY: 104,
+    desc: '높은 산과 시원한 바다가 있어요. 감자와 황태가 유명해요.',
+  },
+  {
+    key: '충청',
+    label: '충청',
+    color: '#66BB6A',
+    hasProducts: true,
+    path: 'M104,148 L188,146 L206,180 L196,228 L126,236 L94,196 Z',
+    labelX: 146,
+    labelY: 192,
+    desc: '넓은 들판이 있어요. 인삼과 딸기가 유명해요.',
+  },
+  {
+    key: '경상',
+    label: '경상',
+    color: '#FF7043',
+    hasProducts: true,
+    path: 'M212,162 L296,172 L302,250 L266,330 L214,322 L202,250 Z',
+    labelX: 252,
+    labelY: 240,
+    desc: '동해 바다와 큰 강이 있어요. 사과와 대게가 유명해요.',
+  },
+  {
+    key: '전라',
+    label: '전라',
+    color: '#FFCA28',
+    hasProducts: true,
+    path: 'M98,242 L194,240 L204,286 L182,344 L120,346 L90,298 Z',
+    labelX: 144,
+    labelY: 292,
+    desc: '기름진 평야와 바다가 있어요. 굴비와 김이 유명해요.',
+  },
+  {
+    key: '제주',
+    label: '제주',
+    color: '#AB47BC',
+    hasProducts: true,
+    path: 'M122,414 L176,408 L188,438 L152,456 L118,446 Z',
+    labelX: 152,
+    labelY: 434,
+    desc: '따뜻한 남쪽 섬이에요. 감귤과 흑돼지가 유명해요.',
+  },
+]
+
+// 지역 이름 → 지도 지역 정보 (빠른 조회용)
+export const MAP_REGION_BY_KEY = MAP_REGIONS.reduce((acc, r) => {
+  acc[r.key] = r
+  return acc
+}, {})

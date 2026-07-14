@@ -442,3 +442,128 @@ button {
   margin-top: 8px;
   text-align: center;
 }
+
+/* ── 상단 탭 (무역 게임 / 지도로 배우기) ─────────── */
+.main-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.main-tab {
+  border: none;
+  background: #ffe0b2;
+  color: #8d6e63;
+  font-size: clamp(16px, 2.2vw, 22px);
+  padding: 10px 22px;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.main-tab.active {
+  background: var(--orange);
+  color: #fff;
+}
+
+/* 도감/퀴즈 전환 버튼 */
+.submode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.submode {
+  flex: 1;
+  border: none;
+  background: #f3e5f5;
+  color: #6a1b9a;
+  font-size: clamp(15px, 2vw, 20px);
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.submode.active {
+  background: var(--purple);
+  color: #fff;
+}
+
+/* ── 지도 화면 레이아웃 ──────────────────────── */
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.map-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.map-hint {
+  margin: 0 0 8px;
+  color: #616161;
+  font-size: 16px;
+}
+
+.korea-map {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  display: block;
+}
+
+.map-label {
+  font-family: 'Jua', sans-serif;
+  font-size: 18px;
+  fill: #ffffff;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.label-toggle {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #616161;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.label-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+/* 퀴즈 진행/피드백 */
+.quiz-progress {
+  font-size: 16px;
+  color: #8d6e63;
+  margin-bottom: 8px;
+}
+
+.quiz-feedback {
+  text-align: center;
+  font-size: 20px;
+  margin: 10px 0 0;
+}
+
+.quiz-feedback.right {
+  color: #2e7d32;
+}
+
+.quiz-feedback.wrong {
+  color: #c62828;
+}
