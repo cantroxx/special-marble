@@ -7,6 +7,7 @@ import { useState } from 'react'
 import KoreaMap from './KoreaMap.jsx'
 import LeafletMap from './LeafletMap.jsx'
 import {
+  MAP_REGIONS,
   MAP_REGION_BY_KEY,
   PRODUCTS,
   PRODUCTS_BY_REGION,
@@ -66,31 +67,86 @@ function RegionMap({ mapFailed, onMapFail, ...rest }) {
   return <LeafletMap {...rest} onFail={onMapFail} />
 }
 
-// ── 도감 모드 ──────────────────────────────────
-// selected 는 특산물 id('감자') 또는 지역명(SVG 대체 지도 클릭 시)일 수 있어요.
+// ── 도감 모드 (드릴다운: 전국 권역 → 권역 상세) ──────
 function ExploreMode({ mapFailed, onMapFail }) {
-  const [selected, setSelected] = useState('감자')
-  const product = PRODUCTS[selected] // 특산물을 골랐을 때
+  const [drill, setDrill] = useState(null) // null=전국 보기 / 권역명=상세 보기
 
+  // 2단계: 권역 상세 (실제 지도 확대 + 그 권역 특산물)
+  if (drill) {
+    return (
+      <RegionDrilldown
+        key={drill}
+        region={drill}
+        onBack={() => setDrill(null)}
+        mapFailed={mapFailed}
+        onMapFail={onMapFail}
+      />
+    )
+  }
+
+  // 1단계: 전국 색칠 지도에서 권역 선택
+  const pickRegion = (key) => {
+    if ((MAP_REGION_BY_KEY[key] || {}).hasProducts) setDrill(key)
+  }
   return (
     <div className="map-layout">
       <div className="panel map-panel">
-        <p className="map-hint">지도에서 특산물(핀)을 눌러 보세요! 👆</p>
-        <RegionMap
-          mapFailed={mapFailed}
-          onMapFail={onMapFail}
-          markerMode="product"
-          onRegionClick={setSelected}
-          selected={selected}
-        />
+        <p className="map-hint">권역(도)을 눌러 그 지역 특산물을 배워요! 👆</p>
+        <KoreaMap onRegionClick={pickRegion} clickableOnlyProducts />
       </div>
 
       <div className="panel">
-        {product ? (
-          <ProductDetail product={product} onPick={setSelected} />
-        ) : (
-          <RegionDetail regionKey={selected} />
-        )}
+        <h2>🗺️ 우리나라 특산물 지도</h2>
+        <div className="compare">
+          지도에서 <b>권역(도)</b>을 누르면 그 지역으로 <b>확대</b>돼서, 어떤 특산물이
+          어디서 나는지 자세히 볼 수 있어요.
+        </div>
+        <div className="region-picker">
+          {MAP_REGIONS.filter((r) => r.hasProducts).map((r) => (
+            <button
+              key={r.key}
+              className="region-btn"
+              style={{ background: r.color }}
+              onClick={() => setDrill(r.key)}
+            >
+              {r.emoji} {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 권역 상세: 실제 지도를 그 도로 확대하고 특산물 핀을 눌러 배웁니다.
+function RegionDrilldown({ region, onBack, mapFailed, onMapFail }) {
+  const productIds = PRODUCTS_BY_REGION[region] || []
+  const [selected, setSelected] = useState(productIds[0])
+  const product = PRODUCTS[selected]
+  const regionInfo = MAP_REGION_BY_KEY[region]
+
+  return (
+    <div>
+      <button className="btn btn-gray back-btn" onClick={onBack}>
+        ← 전국 지도로
+      </button>
+      <div className="map-layout" style={{ marginTop: 12 }}>
+        <div className="panel map-panel">
+          <p className="map-hint">
+            {regionInfo.emoji} {regionInfo.label} · 특산물(핀)을 눌러 보세요! 👆
+          </p>
+          <RegionMap
+            mapFailed={mapFailed}
+            onMapFail={onMapFail}
+            markerMode="product"
+            focusRegion={region}
+            onRegionClick={setSelected}
+            selected={selected}
+          />
+        </div>
+        <div className="panel">
+          {product && <ProductDetail product={product} onPick={setSelected} />}
+        </div>
       </div>
     </div>
   )
@@ -135,45 +191,6 @@ function ProductDetail({ product, onPick }) {
             </button>
           ))}
         </div>
-      )}
-    </>
-  )
-}
-
-// (지도 대체 시) 지역 하나의 특산물 목록
-function RegionDetail({ regionKey }) {
-  const region = MAP_REGION_BY_KEY[regionKey]
-  const productIds = PRODUCTS_BY_REGION[regionKey] || []
-  if (!region) return null
-  return (
-    <>
-      <h2>
-        {region.hasProducts ? '🌱' : '📍'} {region.label} 지역
-      </h2>
-      <div className="compare">{region.desc}</div>
-      {region.hasProducts ? (
-        <div className="item-list">
-          {productIds.map((id) => {
-            const p = PRODUCTS[id]
-            const range = estimateMarketRange(id)
-            return (
-              <div key={id} className="item-row">
-                <div className="item-info">
-                  <span className="item-name">
-                    {p.emoji} {p.name}{' '}
-                    <span style={{ color: '#8d6e63', fontSize: 13 }}>({p.origin})</span>
-                  </span>
-                  <span className="item-price">
-                    산지가 {p.basePrice.toLocaleString()}원 · 시장에서 팔면 약{' '}
-                    {range.low.toLocaleString()}~{range.high.toLocaleString()}원
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <p style={{ color: '#616161' }}>이 지역은 이 게임에서 특산물을 다루지 않아요.</p>
       )}
     </>
   )

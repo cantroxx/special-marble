@@ -13,6 +13,7 @@ export default function LeafletMap({
   feedback = null,
   clickableOnlyProducts = false,
   markerMode = 'region', // 'region' = 지역 핀 6개 / 'product' = 특산물 핀(실제 산지 위치)
+  focusRegion = null, // 이 권역으로 확대 + 그 권역 특산물만 표시(드릴다운 2단계)
   onFail,
 }) {
   const boxRef = useRef(null)
@@ -47,11 +48,20 @@ export default function LeafletMap({
         },
       ).addTo(map)
 
-      // 우리나라 전체가 보이도록 맞춤
-      map.fitBounds([
-        [33.1, 125.5],
-        [38.7, 129.8],
-      ])
+      // 특정 권역으로 확대(드릴다운) 또는 우리나라 전체 보기
+      const focusPts = focusRegion
+        ? Object.values(PRODUCTS)
+            .filter((p) => p.region === focusRegion && p.lat != null)
+            .map((p) => [p.lat, p.lng])
+        : null
+      if (focusPts && focusPts.length) {
+        map.fitBounds(focusPts, { padding: [70, 70], maxZoom: 10 })
+      } else {
+        map.fitBounds([
+          [33.1, 125.5],
+          [38.7, 129.8],
+        ])
+      }
       mapRef.current = map
       setReady(true)
       // 컨테이너 크기 반영(탭 전환 등으로 늦게 그려질 때 대비)
@@ -119,6 +129,7 @@ export default function LeafletMap({
     function drawProductMarkers(map) {
       Object.values(PRODUCTS).forEach((p) => {
         if (p.lat == null) return
+        if (focusRegion && p.region !== focusRegion) return // 드릴다운: 그 권역만
         const regionColor = (MAP_REGION_BY_KEY[p.region] || {}).color || '#4CAF50'
         const on = selected === p.id
 
@@ -149,7 +160,7 @@ export default function LeafletMap({
         markersRef.current.push(marker)
       })
     }
-  }, [ready, selected, feedback, clickableOnlyProducts, markerMode])
+  }, [ready, selected, feedback, clickableOnlyProducts, markerMode, focusRegion])
 
   return <div ref={boxRef} className="leaflet-box" />
 }
