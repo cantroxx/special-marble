@@ -5,7 +5,7 @@
 // 이 화면은 무역 게임과 분리돼 있어(useState만 사용) 서로 영향이 없어요.
 import { useState } from 'react'
 import KoreaMap from './KoreaMap.jsx'
-import KakaoMap from './KakaoMap.jsx'
+import LeafletMap from './LeafletMap.jsx'
 import {
   MAP_REGION_BY_KEY,
   PRODUCTS,
@@ -27,7 +27,7 @@ const ALL_PRODUCT_IDS = Object.keys(PRODUCTS)
 
 export default function MapLearn() {
   const [mode, setMode] = useState('explore') // explore | quiz
-  // 카카오맵이 실패하면 true → 이후에는 SVG 지도 사용(모드 바꿔도 유지)
+  // 지도(Leaflet)가 실패하면 true → 이후에는 SVG 지도 사용(모드 바꿔도 유지)
   const [mapFailed, setMapFailed] = useState(false)
 
   const mapProps = { mapFailed, onMapFail: () => setMapFailed(true) }
@@ -59,10 +59,11 @@ export default function MapLearn() {
   )
 }
 
-// 카카오맵 우선, 실패하면 SVG 지도. 두 지도는 같은 props 를 받습니다.
+// 무료 지도(Leaflet) 우선, 안 되면(오프라인 등) SVG 지도로 대체.
+// 두 지도는 같은 props 를 받습니다.
 function RegionMap({ mapFailed, onMapFail, ...rest }) {
   if (mapFailed) return <KoreaMap {...rest} />
-  return <KakaoMap {...rest} onFail={onMapFail} />
+  return <LeafletMap {...rest} onFail={onMapFail} />
 }
 
 // ── 도감 모드 ──────────────────────────────────
@@ -189,7 +190,7 @@ function QuizMode({ mapFailed, onMapFail }) {
           showLabels={showLabels}
           clickableOnlyProducts
         />
-        {/* '지역 이름 보기'는 SVG 지도일 때만 의미가 있어요(카카오 핀은 항상 이름 표시) */}
+        {/* '지역 이름 보기'는 SVG 지도일 때만 의미가 있어요(지도 핀은 항상 이름 표시) */}
         {mapFailed && (
           <label className="label-toggle">
             <input
