@@ -5,13 +5,14 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MAP_REGIONS, MAP_CENTER } from '../data.js'
+import { MAP_REGIONS, MAP_REGION_BY_KEY, MAP_CENTER, PRODUCTS } from '../data.js'
 
 export default function LeafletMap({
-  onRegionClick,
+  onRegionClick, // 지역/특산물을 눌렀을 때 그 key(지역명 또는 특산물 id)를 전달
   selected = null,
   feedback = null,
   clickableOnlyProducts = false,
+  markerMode = 'region', // 'region' = 지역 핀 6개 / 'product' = 특산물 핀(실제 산지 위치)
   onFail,
 }) {
   const boxRef = useRef(null)
@@ -74,41 +75,81 @@ export default function LeafletMap({
     markersRef.current.forEach((m) => m.remove())
     markersRef.current = []
 
-    MAP_REGIONS.forEach((r) => {
-      if (r.lat == null) return
-      const clickable = !clickableOnlyProducts || r.hasProducts
+    if (markerMode === 'product') {
+      drawProductMarkers(map)
+    } else {
+      drawRegionMarkers(map)
+    }
 
-      let bg = r.hasProducts ? r.color : '#90A4AE'
-      if (selected === r.key) bg = r.color
-      if (feedback && feedback.region === r.key) {
-        bg = feedback.correct ? '#2e7d32' : '#c62828'
-      }
+    function drawRegionMarkers(map) {
+      MAP_REGIONS.forEach((r) => {
+        if (r.lat == null) return
+        const clickable = !clickableOnlyProducts || r.hasProducts
 
-      const html =
-        `<div class="region-pin${clickable ? '' : ' disabled'}" style="background:${bg}">` +
-        `<span class="rp-emoji">${r.emoji || '📍'}</span>` +
-        `<span class="rp-label">${r.label}</span>` +
-        `</div>`
+        let bg = r.hasProducts ? r.color : '#90A4AE'
+        if (selected === r.key) bg = r.color
+        if (feedback && feedback.region === r.key) {
+          bg = feedback.correct ? '#2e7d32' : '#c62828'
+        }
 
-      const icon = L.divIcon({
-        className: 'region-pin-wrap', // Leaflet 기본 흰 네모 스타일 제거용
-        html,
-        iconSize: [66, 46],
-        iconAnchor: [33, 46],
+        const html =
+          `<div class="region-pin${clickable ? '' : ' disabled'}" style="background:${bg}">` +
+          `<span class="rp-emoji">${r.emoji || '📍'}</span>` +
+          `<span class="rp-label">${r.label}</span>` +
+          `</div>`
+
+        const icon = L.divIcon({
+          className: 'region-pin-wrap',
+          html,
+          iconSize: [66, 46],
+          iconAnchor: [33, 46],
+        })
+
+        const marker = L.marker([r.lat, r.lng], {
+          icon,
+          interactive: clickable,
+          zIndexOffset: selected === r.key ? 1000 : 0,
+        }).addTo(map)
+
+        if (clickable) marker.on('click', () => cbRef.current && cbRef.current(r.key))
+        markersRef.current.push(marker)
       })
+    }
 
-      const marker = L.marker([r.lat, r.lng], {
-        icon,
-        interactive: clickable,
-        zIndexOffset: selected === r.key ? 1000 : 0,
-      }).addTo(map)
+    function drawProductMarkers(map) {
+      Object.values(PRODUCTS).forEach((p) => {
+        if (p.lat == null) return
+        const regionColor = (MAP_REGION_BY_KEY[p.region] || {}).color || '#4CAF50'
+        const on = selected === p.id
 
-      if (clickable) {
-        marker.on('click', () => cbRef.current && cbRef.current(r.key))
-      }
-      markersRef.current.push(marker)
-    })
-  }, [ready, selected, feedback, clickableOnlyProducts])
+        const html =
+          `<div class="product-pin${on ? ' on' : ''}" style="background:${regionColor}">` +
+          `<span class="pp-emoji">${p.emoji}</span>` +
+          `<span class="pp-label">${p.name}</span>` +
+          `</div>`
+
+        const icon = L.divIcon({
+          className: 'region-pin-wrap',
+          html,
+          iconSize: [58, 42],
+          iconAnchor: [29, 42],
+        })
+
+        const marker = L.marker([p.lat, p.lng], {
+          icon,
+          zIndexOffset: on ? 1000 : 0,
+        }).addTo(map)
+
+        marker.bindPopup(
+          `<div class="pin-popup"><b>${p.emoji} ${p.name}</b>` +
+            `<br/>${p.region} · <b>${p.origin}</b>` +
+            `<br/>기준가 ${p.basePrice.toLocaleString()}원</div>`,
+        )
+        marker.on('click', () => cbRef.current && cbRef.current(p.id))
+        markersRef.current.push(marker)
+      })
+    }
+  }, [ready, selected, feedback, clickableOnlyProducts, markerMode])
 
   return <div ref={boxRef} className="leaflet-box" />
 }

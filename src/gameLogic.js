@@ -41,19 +41,37 @@ export function getCell(position) {
   return BOARD[position]
 }
 
-// 특산물의 현재 매입가(산지가). 흉년이면 오릅니다.
-export function getBuyPrice(state, productId) {
-  const p = PRODUCTS[productId]
-  const mult = state.harvestRegions[p.region] ? CONFIG.harvestMultiplier : 1
-  return Math.round(p.basePrice * mult)
+// 특산물의 현재 재고(산지에 남은 수량)
+export function getStock(state, productId) {
+  const s = state.stock ? state.stock[productId] : undefined
+  return s == null ? CONFIG.baseStock : s
 }
 
-// 특산물의 현재 판매가. (시장배수 × 수요폭등 배수)
+// 특산물의 현재 매입가(산지가).
+//  - 흉년이면 오르고, 재고가 적을수록(희소할수록) 더 비싸집니다. (수요·공급)
+export function getBuyPrice(state, productId) {
+  const p = PRODUCTS[productId]
+  const harvest = state.harvestRegions[p.region] ? CONFIG.harvestMultiplier : 1
+  const stock = getStock(state, productId)
+  const scarcity = 1 + Math.max(0, CONFIG.baseStock - stock) * CONFIG.scarcityStep
+  return Math.round(p.basePrice * harvest * scarcity)
+}
+
+// 매입가가 기본가보다 올랐는지(재고 부족/흉년) 판단 — UI 표시용
+export function isBuyPriceUp(state, productId) {
+  return getBuyPrice(state, productId) > PRODUCTS[productId].basePrice
+}
+
+// 특산물의 현재 판매가.
+//  - 시장배수 × 수요폭등 배수 × 공급과잉 하락분
+//  - 같은 특산물을 많이 팔면(glut↑) 값이 내려갑니다. (수요·공급)
 export function getSellPrice(state, productId) {
   const p = PRODUCTS[productId]
   const marketMult = state.activeMarket ? state.activeMarket.multiplier : 0
   const surge = state.surgeProducts[productId] ? CONFIG.surgeMultiplier : 1
-  return Math.round(p.basePrice * marketMult * surge)
+  const glut = (state.glut && state.glut[productId]) || 0
+  const glutFactor = Math.max(CONFIG.glutMinFactor, 1 - glut * CONFIG.glutStep)
+  return Math.round(p.basePrice * marketMult * surge * glutFactor)
 }
 
 // 산지 칸에서 안내용으로 보여줄 "예상 시장가" 범위
@@ -107,6 +125,14 @@ function pickRandom(arr) {
 }
 
 // ── 초기 상태 ──────────────────────────────────────
+// 모든 특산물의 재고를 기본값으로 초기화
+function initStock() {
+  return Object.keys(PRODUCTS).reduce((acc, id) => {
+    acc[id] = CONFIG.baseStock
+    return acc
+  }, {})
+}
+
 export function createInitialState() {
   return {
     cash: CONFIG.startCash,
@@ -114,6 +140,8 @@ export function createInitialState() {
     position: 0,
     laps: 0,
     cargo: [], // [{ productId, buyPrice }]
+    stock: initStock(), // { productId: 남은 재고 }  매입하면 줄고 값이 오름
+    glut: {}, // { productId: 공급 과잉도 }  많이 팔면 늘고 값이 내림
     surgeProducts: {}, // { productId: true }  수요 폭등(판매가 2배)
     harvestRegions: {}, // { region: true }     흉년(매입가 상승)
     skipNext: false, // 폭풍으로 다음 턴 쉬기
@@ -185,12 +213,16 @@ export function reducer(state, action) {
     case 'BUY': {
       if (state.activeSource == null) return state
       if (state.cargo.length >= CONFIG.cargoLimit) return state
+      const stock = getStock(state, action.productId)
+      if (stock <= 0) return state // 재고 소진(품절)
       const price = getBuyPrice(state, action.productId)
       if (state.cash < price) return state
       return {
         ...state,
         cash: state.cash - price,
         cargo: [...state.cargo, { productId: action.productId, buyPrice: price }],
+        // 매입 → 재고 1 감소 (다음 매입가는 더 비싸짐)
+        stock: { ...state.stock, [action.productId]: stock - 1 },
         log: addLog(state, `🛒 ${action.productId} 매입 (-${price.toLocaleString()}원)`),
       }
     }
@@ -208,6 +240,8 @@ export function reducer(state, action) {
         ...state,
         cash: state.cash + price,
         cargo,
+        // 판매 → 그 특산물 공급 과잉 1 증가 (다음 판매가는 더 쌈)
+        glut: { ...state.glut, [item.productId]: ((state.glut && state.glut[item.productId]) || 0) + 1 },
         log: addLog(
           state,
           `💰 ${item.productId} 판매 (+${price.toLocaleString()}원, 이윤 ${sign}${profit.toLocaleString()}원)`,
@@ -218,19 +252,23 @@ export function reducer(state, action) {
     // 전부 판매
     case 'SELL_ALL': {
       if (state.activeMarket == null) return state
+      if (state.cargo.length === 0) return state
+      // 같은 특산물을 연달아 팔면 값이 점점 내려가도록 누적 반영
+      const glut = { ...state.glut }
       let cash = state.cash
       let totalProfit = 0
       state.cargo.forEach((item) => {
-        const price = getSellPrice(state, item.productId)
+        const price = getSellPrice({ ...state, glut }, item.productId)
         cash += price
         totalProfit += price - item.buyPrice
+        glut[item.productId] = (glut[item.productId] || 0) + 1
       })
-      if (state.cargo.length === 0) return state
       const sign = totalProfit >= 0 ? '+' : ''
       return {
         ...state,
         cash,
         cargo: [],
+        glut,
         log: addLog(
           state,
           `💰 전부 판매 (총 이윤 ${sign}${totalProfit.toLocaleString()}원)`,
@@ -418,9 +456,23 @@ function endTurn(state, message) {
   let log = state.log
   if (message) log = addLog(state, message)
 
+  // 매 턴: 산지 재고 회복(기본값까지), 시장 공급과잉 서서히 해소
+  const stock = {}
+  Object.keys(PRODUCTS).forEach((id) => {
+    const cur = getStock(state, id)
+    stock[id] = Math.min(CONFIG.baseStock, cur + CONFIG.stockRecoverPerTurn)
+  })
+  const glut = {}
+  Object.keys(state.glut || {}).forEach((id) => {
+    const g = Math.max(0, state.glut[id] - CONFIG.glutDecayPerTurn)
+    if (g > 0) glut[id] = g
+  })
+
   let next = {
     ...state,
     log,
+    stock,
+    glut,
     turn: state.turn + 1,
     phase: 'ready',
     dice: null,

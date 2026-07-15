@@ -5,6 +5,8 @@ import {
   getBuyPrice,
   getSellPrice,
   estimateMarketRange,
+  getStock,
+  isBuyPriceUp,
 } from '../gameLogic.js'
 
 export default function ActionPanel({ state, actions }) {
@@ -93,6 +95,9 @@ function SourceView({ state, actions }) {
       </h2>
       <div className="compare">
         여기서 <b>산지가</b>로 싸게 사서, <b>시장</b>에서 비싸게 팔면 이윤이 남아요!
+        <div style={{ marginTop: 4, fontSize: 13 }}>
+          🔎 많이 사면 <b>재고가 줄어</b> 값이 올라가요(📈). 재고는 매 턴 다시 채워져요.
+        </div>
         {full && <div style={{ color: '#c62828', marginTop: 6 }}>🎒 짐칸이 가득 찼어요.</div>}
       </div>
       <div className="item-list">
@@ -100,24 +105,30 @@ function SourceView({ state, actions }) {
           const p = PRODUCTS[id]
           const buy = getBuyPrice(state, id)
           const range = estimateMarketRange(id)
+          const stock = getStock(state, id)
+          const soldOut = stock <= 0
+          const priceUp = isBuyPriceUp(state, id)
           const cannotAfford = state.cash < buy
           return (
             <div key={id} className="item-row">
               <div className="item-info">
                 <span className="item-name">
-                  {p.emoji} {p.name}
+                  {p.emoji} {p.name}{' '}
+                  <span className={`stock-tag${stock <= 2 ? ' low' : ''}`}>
+                    재고 {stock}/{CONFIG.baseStock}
+                  </span>
                 </span>
                 <span className="item-price">
-                  산지가 {buy.toLocaleString()}원 · 예상 시장가{' '}
+                  산지가 {buy.toLocaleString()}원 {priceUp && <b className="up">📈</b>} · 예상 시장가{' '}
                   {range.low.toLocaleString()}~{range.high.toLocaleString()}원
                 </span>
               </div>
               <button
                 className="btn btn-green"
-                disabled={full || cannotAfford}
+                disabled={full || cannotAfford || soldOut}
                 onClick={() => actions.buy(id)}
               >
-                매입
+                {soldOut ? '품절' : '매입'}
               </button>
             </div>
           )
@@ -140,6 +151,9 @@ function MarketView({ state, actions }) {
       <div className="compare">
         오늘 시장 배수는 <b>×{mult}</b> {isBig && '(큰장은 더 비싸게 팔려요!)'} · 산 가격보다
         비싸면 이윤이 남아요.
+        <div style={{ marginTop: 4, fontSize: 13 }}>
+          🔎 같은 특산물을 <b>많이 팔면</b> 값이 내려가요(📉). 종류를 나눠 파는 게 유리해요!
+        </div>
       </div>
 
       {state.cargo.length === 0 ? (
@@ -152,6 +166,7 @@ function MarketView({ state, actions }) {
               const sell = getSellPrice(state, item.productId)
               const profit = sell - item.buyPrice
               const plus = profit >= 0
+              const glutted = ((state.glut && state.glut[item.productId]) || 0) > 0
               return (
                 <div key={i} className="item-row">
                   <div className="item-info">
@@ -160,7 +175,7 @@ function MarketView({ state, actions }) {
                     </span>
                     <span className="item-price">
                       산 값 {item.buyPrice.toLocaleString()}원 → 판매가{' '}
-                      {sell.toLocaleString()}원{' '}
+                      {sell.toLocaleString()}원 {glutted && <b className="down">📉</b>}{' '}
                       <b className={plus ? 'profit-plus' : 'profit-minus'}>
                         (이윤 {plus ? '+' : ''}
                         {profit.toLocaleString()}원)

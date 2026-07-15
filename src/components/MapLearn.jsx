@@ -67,57 +67,115 @@ function RegionMap({ mapFailed, onMapFail, ...rest }) {
 }
 
 // ── 도감 모드 ──────────────────────────────────
+// selected 는 특산물 id('감자') 또는 지역명(SVG 대체 지도 클릭 시)일 수 있어요.
 function ExploreMode({ mapFailed, onMapFail }) {
-  const [selected, setSelected] = useState('강원')
-  const region = MAP_REGION_BY_KEY[selected]
-  const productIds = PRODUCTS_BY_REGION[selected] || []
+  const [selected, setSelected] = useState('감자')
+  const product = PRODUCTS[selected] // 특산물을 골랐을 때
 
   return (
     <div className="map-layout">
       <div className="panel map-panel">
-        <p className="map-hint">지도에서 지역(핀)을 눌러 보세요! 👆</p>
+        <p className="map-hint">지도에서 특산물(핀)을 눌러 보세요! 👆</p>
         <RegionMap
           mapFailed={mapFailed}
           onMapFail={onMapFail}
+          markerMode="product"
           onRegionClick={setSelected}
           selected={selected}
         />
       </div>
 
       <div className="panel">
-        <h2>
-          {region.hasProducts ? '🌱' : '📍'} {region.label} 지역
-        </h2>
-        <div className="compare">{region.desc}</div>
-
-        {region.hasProducts ? (
-          <div className="item-list">
-            {productIds.map((id) => {
-              const p = PRODUCTS[id]
-              const range = estimateMarketRange(id)
-              return (
-                <div key={id} className="item-row">
-                  <div className="item-info">
-                    <span className="item-name">
-                      {p.emoji} {p.name}
-                    </span>
-                    <span className="item-price">
-                      산지가 {p.basePrice.toLocaleString()}원 · 시장에서 팔면 약{' '}
-                      {range.low.toLocaleString()}~{range.high.toLocaleString()}원
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-            <p className="hint">
-              산지에서 <b>싸게 사서</b> 시장에서 <b>비싸게 팔면</b> 이윤이 남아요!
-            </p>
-          </div>
+        {product ? (
+          <ProductDetail product={product} onPick={setSelected} />
         ) : (
-          <p style={{ color: '#616161' }}>이 지역은 이 게임에서 특산물을 다루지 않아요.</p>
+          <RegionDetail regionKey={selected} />
         )}
       </div>
     </div>
+  )
+}
+
+// 특산물 하나의 상세 (산지 위치·기준가·예상 시장가)
+function ProductDetail({ product, onPick }) {
+  const range = estimateMarketRange(product.id)
+  const region = MAP_REGION_BY_KEY[product.region]
+  const siblings = (PRODUCTS_BY_REGION[product.region] || []).filter((id) => id !== product.id)
+
+  return (
+    <>
+      <h2>
+        {product.emoji} {product.name}
+      </h2>
+      <div className="compare">
+        <b>{product.region}</b>의 <b>{product.origin}</b>에서 나는 특산물이에요.
+        <br />
+        {region && region.desc}
+      </div>
+      <div className="item-list">
+        <div className="item-row">
+          <div className="item-info">
+            <span className="item-name">📍 산지: {product.origin}</span>
+            <span className="item-price">
+              산지가(기준) {product.basePrice.toLocaleString()}원 · 시장에서 팔면 약{' '}
+              {range.low.toLocaleString()}~{range.high.toLocaleString()}원
+            </span>
+          </div>
+        </div>
+      </div>
+      <p className="hint">
+        산지에서 <b>싸게 사서</b> 시장에서 <b>비싸게 팔면</b> 이윤이 남아요!
+      </p>
+      {siblings.length > 0 && (
+        <div className="sibling-chips">
+          <span style={{ color: '#8d6e63', fontSize: 14 }}>같은 {product.region} 특산물: </span>
+          {siblings.map((id) => (
+            <button key={id} className="chip" onClick={() => onPick(id)}>
+              {PRODUCTS[id].emoji} {PRODUCTS[id].name}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+// (지도 대체 시) 지역 하나의 특산물 목록
+function RegionDetail({ regionKey }) {
+  const region = MAP_REGION_BY_KEY[regionKey]
+  const productIds = PRODUCTS_BY_REGION[regionKey] || []
+  if (!region) return null
+  return (
+    <>
+      <h2>
+        {region.hasProducts ? '🌱' : '📍'} {region.label} 지역
+      </h2>
+      <div className="compare">{region.desc}</div>
+      {region.hasProducts ? (
+        <div className="item-list">
+          {productIds.map((id) => {
+            const p = PRODUCTS[id]
+            const range = estimateMarketRange(id)
+            return (
+              <div key={id} className="item-row">
+                <div className="item-info">
+                  <span className="item-name">
+                    {p.emoji} {p.name}{' '}
+                    <span style={{ color: '#8d6e63', fontSize: 13 }}>({p.origin})</span>
+                  </span>
+                  <span className="item-price">
+                    산지가 {p.basePrice.toLocaleString()}원 · 시장에서 팔면 약{' '}
+                    {range.low.toLocaleString()}~{range.high.toLocaleString()}원
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <p style={{ color: '#616161' }}>이 지역은 이 게임에서 특산물을 다루지 않아요.</p>
+      )}
+    </>
   )
 }
 

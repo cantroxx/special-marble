@@ -17,17 +17,19 @@ export const REGIONS = {
 // ── 2) 특산물 정보 ─────────────────────────────────
 // { id, name, region(산지), basePrice(기준가) }
 // 산지가 = 기준가, 시장 판매가 = 기준가 × 시장배수(1.5~2.0)
+// lat/lng: 실제 대표 산지 위치 (지도에 특산물 핀을 찍는 데 사용)
+// origin: 그 특산물로 유명한 고장 이름 (학습용 표시)
 export const PRODUCTS = {
-  감자: { id: '감자', name: '감자', region: '강원', basePrice: 300, emoji: '🥔' },
-  황태: { id: '황태', name: '황태', region: '강원', basePrice: 800, emoji: '🐟' },
-  인삼: { id: '인삼', name: '인삼', region: '충청', basePrice: 1200, emoji: '🌱' },
-  딸기: { id: '딸기', name: '딸기', region: '충청', basePrice: 400, emoji: '🍓' },
-  굴비: { id: '굴비', name: '굴비', region: '전라', basePrice: 900, emoji: '🐠' },
-  김: { id: '김', name: '김', region: '전라', basePrice: 250, emoji: '🍙' },
-  사과: { id: '사과', name: '사과', region: '경상', basePrice: 350, emoji: '🍎' },
-  대게: { id: '대게', name: '대게', region: '경상', basePrice: 1100, emoji: '🦀' },
-  감귤: { id: '감귤', name: '감귤', region: '제주', basePrice: 300, emoji: '🍊' },
-  흑돼지: { id: '흑돼지', name: '흑돼지', region: '제주', basePrice: 1000, emoji: '🐷' },
+  감자: { id: '감자', name: '감자', region: '강원', basePrice: 300, emoji: '🥔', origin: '평창·정선', lat: 37.37, lng: 128.39 },
+  황태: { id: '황태', name: '황태', region: '강원', basePrice: 800, emoji: '🐟', origin: '인제 용대리', lat: 38.15, lng: 128.41 },
+  인삼: { id: '인삼', name: '인삼', region: '충청', basePrice: 1200, emoji: '🌱', origin: '금산', lat: 36.11, lng: 127.49 },
+  딸기: { id: '딸기', name: '딸기', region: '충청', basePrice: 400, emoji: '🍓', origin: '논산', lat: 36.19, lng: 127.10 },
+  굴비: { id: '굴비', name: '굴비', region: '전라', basePrice: 900, emoji: '🐠', origin: '영광 법성포', lat: 35.32, lng: 126.42 },
+  김: { id: '김', name: '김', region: '전라', basePrice: 250, emoji: '🍙', origin: '완도', lat: 34.31, lng: 126.75 },
+  사과: { id: '사과', name: '사과', region: '경상', basePrice: 350, emoji: '🍎', origin: '청송·영주', lat: 36.43, lng: 129.06 },
+  대게: { id: '대게', name: '대게', region: '경상', basePrice: 1100, emoji: '🦀', origin: '영덕', lat: 36.41, lng: 129.37 },
+  감귤: { id: '감귤', name: '감귤', region: '제주', basePrice: 300, emoji: '🍊', origin: '서귀포', lat: 33.25, lng: 126.56 },
+  흑돼지: { id: '흑돼지', name: '흑돼지', region: '제주', basePrice: 1000, emoji: '🐷', origin: '제주시', lat: 33.45, lng: 126.57 },
 }
 
 // 지역 → 그 지역 특산물 id 목록 (산지 칸에서 살 수 있는 목록)
@@ -136,6 +138,14 @@ export const CONFIG = {
   bigMarketMax: 2.5, // 큰장 판매 배수 최대
   harvestMultiplier: 1.5, // 흉년 시 매입가 상승 배수
   surgeMultiplier: 2.0, // 수요 폭등 시 판매가 배수
+
+  // ── 수요·공급(재고/시세 변동) ──
+  baseStock: 8, // 산지 특산물 기본 재고
+  stockRecoverPerTurn: 2, // 매 턴 재고 회복량 (기본값까지)
+  scarcityStep: 0.09, // 재고가 1개 줄 때마다 산지가 +9% (희소하면 비싸짐)
+  glutStep: 0.08, // 같은 특산물 1개 팔 때마다 시장가 -8% (공급 넘치면 값 내림)
+  glutMinFactor: 0.5, // 시장가 하락 하한(최저 50%까지)
+  glutDecayPerTurn: 1, // 매 턴 시장 포화(공급 과잉) 1씩 회복
 }
 
 // ── 8) 지도 학습용: 전국 지역 도형(SVG) + 설명 ──────
