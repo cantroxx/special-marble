@@ -13,11 +13,14 @@ import {
 import { CONFIG } from '../data.js'
 import BattleBoard from './BattleBoard.jsx'
 import BattleActionPanel from './BattleActionPanel.jsx'
+import { firebaseReady, prepare, createRoom, joinRoom, listRooms, OnlineSession } from '../online.js'
 
 export default function Battle() {
-  const [config, setConfig] = useState(null) // null=메뉴 / {mode, names}
+  const [config, setConfig] = useState(null) // null=메뉴 / {mode,...}
 
   if (!config) return <BattleMenu onStart={setConfig} />
+  if (config.mode === 'online')
+    return <OnlineBattleGame key={config.code} config={config} onExit={() => setConfig(null)} />
   return <BattleGame key={JSON.stringify(config)} config={config} onExit={() => setConfig(null)} />
 }
 
@@ -61,7 +64,218 @@ function BattleMenu({ onStart }) {
         👫 둘이 대전 (번갈아 하기)
       </button>
 
-      <div className="online-soon">🌐 온라인 대전(친구와 각자 기기에서)은 곧 추가돼요!</div>
+      <OnlineMenu myName={myName} onStart={onStart} />
+    </div>
+  )
+}
+
+// 온라인 대전 메뉴 (퀴즈타운에 배포됐을 때만 = firebaseReady)
+function OnlineMenu({ myName, onStart }) {
+  const [ready] = useState(() => firebaseReady())
+  const [rooms, setRooms] = useState([])
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const refresh = () => {
+    prepare()
+      .then((deps) => listRooms(deps))
+      .then(setRooms)
+      .catch(() => {})
+  }
+  useEffect(() => {
+    if (ready) refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready])
+
+  if (!ready) {
+    return (
+      <div className="online-soon">
+        🌐 온라인 대전은 <b>퀴즈타운</b>에 로그인해서 열면 이용할 수 있어요. (지금 화면은 봇·연습만)
+      </div>
+    )
+  }
+
+  const go = (fn) => {
+    setBusy(true)
+    setErr('')
+    prepare()
+      .then((deps) => fn(deps).then((c) => onStart({ mode: 'online', code: c })))
+      .catch((e) => {
+        setErr(e.message || '연결 실패')
+        setBusy(false)
+      })
+  }
+
+  return (
+    <div className="online-box">
+      <h3 style={{ margin: '4px 0' }}>🌐 온라인 대전 (친구와 각자 기기에서)</h3>
+      <button className="btn btn-primary" disabled={busy} onClick={() => go((d) => createRoom(d, `${myName}의 방`))}>
+        ➕ 방 만들기
+      </button>
+      <div className="join-row">
+        <input
+          className="battle-input"
+          placeholder="방 번호 4자리"
+          value={code}
+          maxLength={4}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+        />
+        <button className="btn btn-green" disabled={busy || code.length !== 4} onClick={() => go((d) => joinRoom(d, code))}>
+          입장
+        </button>
+      </div>
+      <div className="room-list">
+        <div className="rl-head">
+          열린 방{' '}
+          <button className="mini-link" onClick={refresh}>
+            새로고침↻
+          </button>
+        </div>
+        {rooms.length === 0 ? (
+          <p style={{ color: '#9e9e9e', fontSize: 14 }}>아직 열린 방이 없어요. 방을 만들어 보세요!</p>
+        ) : (
+          rooms.map((r) => (
+            <button key={r.code} className="room-item" disabled={busy} onClick={() => go((d) => joinRoom(d, r.code))}>
+              {r.title} · {r.count}/2 · {r.code}
+            </button>
+          ))
+        )}
+      </div>
+      {err && <p className="quiz-feedback wrong">{err}</p>}
+    </div>
+  )
+}
+
+// ── 온라인 대전 진행 ────────────────────────────
+function OnlineBattleGame({ config, onExit }) {
+  const [session, setSession] = useState(null)
+  const [room, setRoom] = useState(null)
+  const [recorded, setRecorded] = useState(false)
+
+  // 세션 준비 + 구독
+  useEffect(() => {
+    let sess
+    prepare().then((deps) => {
+      sess = OnlineSession(deps, config.code)
+      sess.onChange(() => setRoom({ ...sess.getRoom() }))
+      setSession(sess)
+      setRoom(sess.getRoom())
+    })
+    return () => sess && sess.leave()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.code])
+
+  // 게임 끝나면 내 랭크 1회 기록
+  useEffect(() => {
+    if (session && room && room.status === 'ended' && !recorded) {
+      setRecorded(true)
+      session.recordRank()
+    }
+  }, [session, room, recorded])
+
+  if (!session || !room) {
+    return (
+      <div className="panel" style={{ maxWidth: 520, margin: '0 auto' }}>
+        <h2>🌐 방 연결 중…</h2>
+      </div>
+    )
+  }
+
+  const seat = session.mySeat()
+  const battle = room.battle
+
+  // 대기실
+  if (room.status === 'waiting') {
+    const isHost = seat === 0
+    const foe = room.seats[1]
+    return (
+      <div className="panel" style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
+        <button className="btn btn-gray back-btn" onClick={onExit} style={{ float: 'left' }}>
+          ← 나가기
+        </button>
+        <h2>🌐 대기실</h2>
+        <div className="room-code">방 번호 <b>{room.code}</b></div>
+        <p>친구에게 이 번호를 알려주고 "입장"하라고 하세요!</p>
+        <div className="seat-row">
+          <div className="seat">🧑‍🌾 {room.seats[0].name}</div>
+          <div className="seat">{foe ? `🧑‍🍳 ${foe.name}` : '⌛ 기다리는 중…'}</div>
+        </div>
+        {isHost ? (
+          <button className="btn btn-primary" disabled={!foe} onClick={() => session.start()}>
+            {foe ? '⚔️ 대전 시작!' : '상대를 기다려요…'}
+          </button>
+        ) : (
+          <p style={{ color: '#616161' }}>방장이 시작하기를 기다리는 중…</p>
+        )}
+      </div>
+    )
+  }
+
+  // 진행/종료
+  const isMyTurn = battle && battle.current === seat && battle.phase !== 'ended'
+  const oactions = {
+    roll: () => session.act({ type: 'ROLL', dice: rollDice() }),
+    move: (steps) => session.act({ type: 'MOVE', plan: planBattleMove(battle, steps) }),
+    buy: (id) => session.act({ type: 'BUY', productId: id }),
+    sell: (i) => session.act({ type: 'SELL', index: i }),
+    sellAll: () => session.act({ type: 'SELL_ALL' }),
+    answerQuiz: (c) => session.act({ type: 'ANSWER_QUIZ', choice: c }),
+    endTurn: () => session.act({ type: 'END_TURN' }),
+    skipTurn: () => session.act({ type: 'SKIP_TURN' }),
+  }
+
+  return (
+    <div>
+      <div className="battle-topbar">
+        <button className="btn btn-gray back-btn" onClick={onExit}>
+          ← 나가기
+        </button>
+        <div className="battle-players">
+          {battle.players.map((p, i) => (
+            <div key={i} className={`battle-pcard${battle.current === i && battle.phase !== 'ended' ? ' active' : ''}`}>
+              <div className="bp-name">
+                {i === seat ? '⭐' : '🧑'} {p.name}
+              </div>
+              <div className="bp-cash">{p.cash.toLocaleString()}원</div>
+              <div className="bp-cargo">🎒 {p.cargo.length}/{CONFIG.cargoLimit}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="map-layout" style={{ marginTop: 12 }}>
+        <BattleBoard state={battle} />
+        <div>
+          {battle.phase !== 'ended' &&
+            (isMyTurn ? (
+              <BattleActionPanel state={battle} actions={oactions} />
+            ) : (
+              <div className="panel">
+                <h2>⏳ 상대 차례</h2>
+                <p style={{ color: '#616161' }}>{battle.players[battle.current].name}이(가) 두는 중…</p>
+              </div>
+            ))}
+          <div className="panel">
+            <h2>활동 기록</h2>
+            <ul className="log-list">
+              {(battle.log || []).map((e, i) => (
+                <li key={i}>{e.message}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {battle.phase === 'ended' && (
+        <BattleResult
+          state={battle}
+          config={{ mode: 'online' }}
+          seat={seat}
+          onRestart={onExit}
+          onExit={onExit}
+        />
+      )}
     </div>
   )
 }
@@ -154,12 +368,12 @@ function BattleGame({ config, onExit }) {
   )
 }
 
-function BattleResult({ state, config, onRestart, onExit }) {
+function BattleResult({ state, config, onRestart, onExit, seat = 0 }) {
   const draw = state.winner === 'draw'
   const winnerName = draw ? null : state.players[state.winner].name
-  // 사람(플레이어0) 기준 승패 랭크 점수 (온라인에서 Firestore에 기록될 값)
-  const humanWon = state.winner === 0
-  const rankPts = draw ? Math.round((RANK_WIN + RANK_LOSE) / 2) : humanWon ? RANK_WIN : RANK_LOSE
+  // 나(온라인=내 좌석, 봇/연습=플레이어0) 기준 승패 랭크 점수
+  const iWon = state.winner === seat
+  const rankPts = draw ? Math.round((RANK_WIN + RANK_LOSE) / 2) : iWon ? RANK_WIN : RANK_LOSE
 
   return (
     <div className="result-overlay">
