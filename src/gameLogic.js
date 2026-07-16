@@ -126,7 +126,7 @@ function pickRandom(arr) {
 
 // ── 초기 상태 ──────────────────────────────────────
 // 모든 특산물의 재고를 기본값으로 초기화
-function initStock() {
+export function initStock() {
   return Object.keys(PRODUCTS).reduce((acc, id) => {
     acc[id] = CONFIG.baseStock
     return acc
@@ -145,7 +145,7 @@ function shuffleArr(arr) {
 
 // 게임 시작마다 산지 칸에 "랜덤 지역 + 그 지역 특산물 2~3개"를 배정
 // → 판마다 놓이는 특산물이 달라집니다. (모든 지역이 최소 1칸씩 등장)
-function buildSources() {
+export function buildSources() {
   const sourceIdx = BOARD.map((c, i) => (c.type === 'source' ? i : -1)).filter((i) => i >= 0)
   const regions = shuffleArr(Object.keys(PRODUCTS_BY_REGION)) // 6개 지역 섞기
   const assign = {}

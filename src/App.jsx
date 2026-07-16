@@ -17,6 +17,7 @@ import PlayerInfo from './components/PlayerInfo.jsx'
 import ActionPanel from './components/ActionPanel.jsx'
 import ResultScreen from './components/ResultScreen.jsx'
 import MapLearn from './components/MapLearn.jsx'
+import Battle from './components/Battle.jsx'
 
 export default function App() {
   // 화면 탭: 'game'(무역 게임) | 'map'(지도로 배우기)
@@ -64,9 +65,16 @@ export default function App() {
         >
           🗺️ 지도로 배우기
         </button>
+        <button
+          className={`main-tab ${tab === 'battle' ? 'active' : ''}`}
+          onClick={() => setTab('battle')}
+        >
+          ⚔️ 대전
+        </button>
       </div>
 
       {tab === 'map' && <MapLearn />}
+      {tab === 'battle' && <Battle />}
 
       {tab === 'game' && (
       <div className="layout">

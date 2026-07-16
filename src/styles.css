@@ -627,6 +627,70 @@ button {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
 }
 
+/* ── 대전 ─────────────────────────────────── */
+.battle-label {
+  display: block;
+  font-size: 15px;
+  color: #8d6e63;
+}
+.battle-input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  font-size: 18px;
+  font-family: 'Jua', sans-serif;
+  border: 2px solid #ffe0b2;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+.online-soon {
+  margin-top: 14px;
+  padding: 10px;
+  background: #ede7f6;
+  color: #5e35b1;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.battle-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.battle-players {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.battle-pcard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 8px 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  border: 3px solid transparent;
+  min-width: 120px;
+}
+.battle-pcard.active {
+  border-color: var(--orange);
+  background: #fff3e0;
+}
+.bp-name {
+  font-size: clamp(15px, 1.8vw, 18px);
+}
+.bp-cash {
+  font-size: clamp(18px, 2.4vw, 26px);
+  color: #2e7d32;
+}
+.bp-cargo {
+  font-size: 13px;
+  color: #8d6e63;
+}
+
 /* Leaflet 기본 마커의 흰 네모/테두리 제거(우리 핀만 보이게) */
 .region-pin-wrap {
   background: transparent;
