@@ -198,7 +198,7 @@ function ProductDetail({ product, onPick }) {
 
 // ── 퀴즈 모드 ──────────────────────────────────
 function QuizMode({ mapFailed, onMapFail }) {
-  const [questions, setQuestions] = useState(() => shuffle(ALL_PRODUCT_IDS))
+  const [questions, setQuestions] = useState(() => shuffle(ALL_PRODUCT_IDS).slice(0, 10))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [feedback, setFeedback] = useState(null) // { region, correct }
@@ -225,7 +225,7 @@ function QuizMode({ mapFailed, onMapFail }) {
   }
 
   function restart() {
-    setQuestions(shuffle(ALL_PRODUCT_IDS))
+    setQuestions(shuffle(ALL_PRODUCT_IDS).slice(0, 10))
     setIndex(0)
     setScore(0)
     setFeedback(null)

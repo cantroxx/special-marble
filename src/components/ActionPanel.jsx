@@ -84,8 +84,8 @@ export default function ActionPanel({ state, actions }) {
 
 // ── 산지: 매입 화면 ─────────────────────────────
 function SourceView({ state, actions }) {
-  const region = state.activeSource
-  const ids = PRODUCTS_BY_REGION[region] || []
+  const region = state.activeSource.region
+  const ids = state.activeSource.productIds || []
   const full = state.cargo.length >= CONFIG.cargoLimit
 
   return (

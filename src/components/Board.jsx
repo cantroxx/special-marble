@@ -1,6 +1,6 @@
 // Board.jsx — 20칸 게임판을 6×6 격자로 그립니다.
 // 가운데에는 목표 자금 / 주사위 / 남은 턴을 크게 보여줍니다.
-import { BOARD, CELL_COLORS, PRODUCTS_BY_REGION, PRODUCTS } from '../data.js'
+import { BOARD, CELL_COLORS, PRODUCTS } from '../data.js'
 import { CONFIG } from '../data.js'
 
 // 코너 칸 색은 종류별로 다르게
@@ -16,17 +16,15 @@ function cellColor(cell) {
   return CELL_COLORS[cell.type]
 }
 
-// 산지 칸에 그 지역 특산물 이름을 짧게 표시
-function sourceSub(region) {
-  const ids = PRODUCTS_BY_REGION[region] || []
-  return ids.map((id) => PRODUCTS[id].name).join('·')
-}
-
 export default function Board({ state }) {
   return (
     <div className="board">
       {BOARD.map((cell, i) => {
         const isCurrent = state.position === i
+        // 산지 칸은 이 판에 배정된 지역/특산물을 표시
+        const src = cell.type === 'source' ? (state.sources && state.sources[i]) : null
+        const srcRegion = src ? src.region : cell.region
+        const srcIds = src ? src.productIds : []
         return (
           <div
             key={i}
@@ -39,11 +37,15 @@ export default function Board({ state }) {
           >
             {isCurrent && <span className="token">🧑‍🌾</span>}
             <span className="cell-emoji">
-              {cell.emoji || (cell.type === 'source' ? '🌱' : '')}
+              {cell.type === 'source'
+                ? srcIds.map((id) => PRODUCTS[id].emoji).join('')
+                : cell.emoji || ''}
             </span>
-            <span className="cell-name">{cell.name}</span>
+            <span className="cell-name">
+              {cell.type === 'source' ? `${srcRegion} 산지` : cell.name}
+            </span>
             {cell.type === 'source' && (
-              <span className="cell-sub">{sourceSub(cell.region)}</span>
+              <span className="cell-sub">{srcIds.map((id) => PRODUCTS[id].name).join('·')}</span>
             )}
           </div>
         )

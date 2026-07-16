@@ -19,7 +19,7 @@ import {
   CONFIG,
 } from './data.js'
 
-const STORAGE_KEY = 'specialty-marble-save-v1'
+const STORAGE_KEY = 'specialty-marble-save-v2'
 const BOARD_SIZE = BOARD.length // 20
 
 // ── 도우미: 랜덤 (리듀서 밖에서만 호출) ──────────────
@@ -133,6 +133,31 @@ function initStock() {
   }, {})
 }
 
+// 배열 섞기 (게임 시작 시 산지 배정용)
+function shuffleArr(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// 게임 시작마다 산지 칸에 "랜덤 지역 + 그 지역 특산물 2~3개"를 배정
+// → 판마다 놓이는 특산물이 달라집니다. (모든 지역이 최소 1칸씩 등장)
+function buildSources() {
+  const sourceIdx = BOARD.map((c, i) => (c.type === 'source' ? i : -1)).filter((i) => i >= 0)
+  const regions = shuffleArr(Object.keys(PRODUCTS_BY_REGION)) // 6개 지역 섞기
+  const assign = {}
+  sourceIdx.forEach((idx, k) => {
+    const region = regions[k % regions.length] // 칸이 지역보다 많으면 앞에서부터 반복
+    const pool = PRODUCTS_BY_REGION[region] || []
+    const count = Math.min(pool.length, 2 + Math.floor(Math.random() * 2)) // 2~3개
+    assign[idx] = { region, productIds: shuffleArr(pool).slice(0, count) }
+  })
+  return assign
+}
+
 export function createInitialState() {
   return {
     cash: CONFIG.startCash,
@@ -140,6 +165,7 @@ export function createInitialState() {
     position: 0,
     laps: 0,
     cargo: [], // [{ productId, buyPrice }]
+    sources: buildSources(), // { 보드칸index: { region, productIds } }  매판 랜덤
     stock: initStock(), // { productId: 남은 재고 }  매입하면 줄고 값이 오름
     glut: {}, // { productId: 공급 과잉도 }  많이 팔면 늘고 값이 내림
     surgeProducts: {}, // { productId: true }  수요 폭등(판매가 2배)
@@ -340,7 +366,10 @@ function applyMove(state, plan) {
   const cell = BOARD[plan.to]
 
   if (cell.type === 'source') {
-    next.activeSource = cell.region
+    // 이 판에 이 칸에 배정된 지역/특산물 (없으면 안전하게 대체)
+    next.activeSource =
+      (state.sources && state.sources[plan.to]) ||
+      { region: cell.region, productIds: PRODUCTS_BY_REGION[cell.region] || [] }
   } else if (cell.type === 'market') {
     next.activeMarket = { multiplier: plan.marketMultiplier, isBig: false }
   } else if (cell.type === 'corner') {

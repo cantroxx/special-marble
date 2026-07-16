@@ -19,17 +19,59 @@ export const REGIONS = {
 // 산지가 = 기준가, 시장 판매가 = 기준가 × 시장배수(1.5~2.0)
 // lat/lng: 실제 대표 산지 위치 (지도에 특산물 핀을 찍는 데 사용)
 // origin: 그 특산물로 유명한 고장 이름 (학습용 표시)
+// 초등 4학년 사회 "지역의 특색·특산물" 참고, 지역당 개수는 불균등.
 export const PRODUCTS = {
-  감자: { id: '감자', name: '감자', region: '강원', basePrice: 300, emoji: '🥔', origin: '평창·정선', lat: 37.37, lng: 128.39 },
-  황태: { id: '황태', name: '황태', region: '강원', basePrice: 800, emoji: '🐟', origin: '인제 용대리', lat: 38.15, lng: 128.41 },
+  // ── 강원 (7) ──
+  감자: { id: '감자', name: '감자', region: '강원', basePrice: 300, emoji: '🥔', origin: '정선', lat: 37.38, lng: 128.66 },
+  황태: { id: '황태', name: '황태', region: '강원', basePrice: 800, emoji: '🐟', origin: '인제', lat: 38.07, lng: 128.17 },
+  옥수수: { id: '옥수수', name: '옥수수', region: '강원', basePrice: 350, emoji: '🌽', origin: '홍천', lat: 37.70, lng: 127.89 },
+  오징어: { id: '오징어', name: '오징어', region: '강원', basePrice: 600, emoji: '🦑', origin: '속초', lat: 38.21, lng: 128.59 },
+  한우: { id: '한우', name: '한우', region: '강원', basePrice: 1500, emoji: '🐮', origin: '횡성', lat: 37.49, lng: 127.98 },
+  메밀: { id: '메밀', name: '메밀', region: '강원', basePrice: 400, emoji: '🌾', origin: '봉평', lat: 37.60, lng: 128.33 },
+  송이버섯: { id: '송이버섯', name: '송이버섯', region: '강원', basePrice: 1300, emoji: '🍄', origin: '양양', lat: 38.07, lng: 128.62 },
+
+  // ── 충청 (6) ──
   인삼: { id: '인삼', name: '인삼', region: '충청', basePrice: 1200, emoji: '🌱', origin: '금산', lat: 36.11, lng: 127.49 },
   딸기: { id: '딸기', name: '딸기', region: '충청', basePrice: 400, emoji: '🍓', origin: '논산', lat: 36.19, lng: 127.10 },
-  굴비: { id: '굴비', name: '굴비', region: '전라', basePrice: 900, emoji: '🐠', origin: '영광 법성포', lat: 35.32, lng: 126.42 },
+  마늘: { id: '마늘', name: '마늘', region: '충청', basePrice: 500, emoji: '🧄', origin: '서산', lat: 36.78, lng: 126.45 },
+  대추: { id: '대추', name: '대추', region: '충청', basePrice: 450, emoji: '🔴', origin: '보은', lat: 36.49, lng: 127.73 },
+  밤: { id: '밤', name: '밤', region: '충청', basePrice: 500, emoji: '🌰', origin: '공주', lat: 36.45, lng: 127.12 },
+  고추: { id: '고추', name: '고추', region: '충청', basePrice: 700, emoji: '🌶️', origin: '청양', lat: 36.46, lng: 126.80 },
+
+  // ── 전라 (8) ──
+  굴비: { id: '굴비', name: '굴비', region: '전라', basePrice: 900, emoji: '🐠', origin: '영광', lat: 35.28, lng: 126.51 },
   김: { id: '김', name: '김', region: '전라', basePrice: 250, emoji: '🍙', origin: '완도', lat: 34.31, lng: 126.75 },
-  사과: { id: '사과', name: '사과', region: '경상', basePrice: 350, emoji: '🍎', origin: '청송·영주', lat: 36.43, lng: 129.06 },
+  배: { id: '배', name: '배', region: '전라', basePrice: 400, emoji: '🍐', origin: '나주', lat: 35.02, lng: 126.71 },
+  녹차: { id: '녹차', name: '녹차', region: '전라', basePrice: 800, emoji: '🍵', origin: '보성', lat: 34.77, lng: 127.08 },
+  매실: { id: '매실', name: '매실', region: '전라', basePrice: 550, emoji: '🟢', origin: '광양', lat: 35.00, lng: 127.70 },
+  홍어: { id: '홍어', name: '홍어', region: '전라', basePrice: 1100, emoji: '🐟', origin: '흑산도', lat: 34.68, lng: 125.43 },
+  고추장: { id: '고추장', name: '고추장', region: '전라', basePrice: 600, emoji: '🥫', origin: '순창', lat: 35.37, lng: 127.14 },
+  유자: { id: '유자', name: '유자', region: '전라', basePrice: 500, emoji: '🍋', origin: '고흥', lat: 34.61, lng: 127.28 },
+
+  // ── 경상 (8) ──
+  사과: { id: '사과', name: '사과', region: '경상', basePrice: 350, emoji: '🍎', origin: '청송', lat: 36.43, lng: 129.06 },
   대게: { id: '대게', name: '대게', region: '경상', basePrice: 1100, emoji: '🦀', origin: '영덕', lat: 36.41, lng: 129.37 },
+  참외: { id: '참외', name: '참외', region: '경상', basePrice: 400, emoji: '🍈', origin: '성주', lat: 35.92, lng: 128.28 },
+  곶감: { id: '곶감', name: '곶감', region: '경상', basePrice: 600, emoji: '🟠', origin: '상주', lat: 36.41, lng: 128.16 },
+  미나리: { id: '미나리', name: '미나리', region: '경상', basePrice: 300, emoji: '🌿', origin: '청도', lat: 35.65, lng: 128.73 },
+  멸치: { id: '멸치', name: '멸치', region: '경상', basePrice: 700, emoji: '🐟', origin: '기장', lat: 35.24, lng: 129.21 },
+  복숭아: { id: '복숭아', name: '복숭아', region: '경상', basePrice: 500, emoji: '🍑', origin: '영천', lat: 35.97, lng: 128.94 },
+  문어: { id: '문어', name: '문어', region: '경상', basePrice: 900, emoji: '🐙', origin: '포항', lat: 36.02, lng: 129.36 },
+
+  // ── 제주 (6) ──
   감귤: { id: '감귤', name: '감귤', region: '제주', basePrice: 300, emoji: '🍊', origin: '서귀포', lat: 33.25, lng: 126.56 },
   흑돼지: { id: '흑돼지', name: '흑돼지', region: '제주', basePrice: 1000, emoji: '🐷', origin: '제주시', lat: 33.45, lng: 126.57 },
+  갈치: { id: '갈치', name: '갈치', region: '제주', basePrice: 900, emoji: '🐟', origin: '한림', lat: 33.41, lng: 126.27 },
+  한라봉: { id: '한라봉', name: '한라봉', region: '제주', basePrice: 500, emoji: '🍊', origin: '서귀포', lat: 33.28, lng: 126.62 },
+  옥돔: { id: '옥돔', name: '옥돔', region: '제주', basePrice: 1200, emoji: '🐟', origin: '제주', lat: 33.51, lng: 126.53 },
+  표고버섯: { id: '표고버섯', name: '표고버섯', region: '제주', basePrice: 700, emoji: '🍄', origin: '서귀포', lat: 33.35, lng: 126.55 },
+
+  // ── 수도권(경기) (5) ──
+  쌀: { id: '쌀', name: '쌀', region: '수도권', basePrice: 450, emoji: '🌾', origin: '이천', lat: 37.27, lng: 127.44 },
+  포도: { id: '포도', name: '포도', region: '수도권', basePrice: 600, emoji: '🍇', origin: '안성', lat: 37.01, lng: 127.27 },
+  고구마: { id: '고구마', name: '고구마', region: '수도권', basePrice: 350, emoji: '🍠', origin: '여주', lat: 37.30, lng: 127.64 },
+  잣: { id: '잣', name: '잣', region: '수도권', basePrice: 1000, emoji: '🌰', origin: '가평', lat: 37.83, lng: 127.51 },
+  순무: { id: '순무', name: '순무', region: '수도권', basePrice: 300, emoji: '🥬', origin: '강화', lat: 37.75, lng: 126.49 },
 }
 
 // 지역 → 그 지역 특산물 id 목록 (산지 칸에서 살 수 있는 목록)
@@ -160,14 +202,14 @@ export const MAP_REGIONS = [
     key: '수도권',
     label: '수도권',
     emoji: '🏙️',
-    color: '#B0BEC5',
-    hasProducts: false,
+    color: '#26A69A',
+    hasProducts: true,
     lat: 37.45,
     lng: 127.0,
     path: 'M118,72 L172,60 L196,92 L184,132 L128,140 L104,108 Z',
     labelX: 148,
     labelY: 104,
-    desc: '서울·경기 지역이에요. 이 게임에서는 특산물을 다루지 않아요. 🙂',
+    desc: '서울·경기 지역이에요. 이천 쌀·안성 포도·가평 잣이 유명해요.',
   },
   {
     key: '강원',
